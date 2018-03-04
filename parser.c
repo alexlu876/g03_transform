@@ -60,6 +60,11 @@ void parse_file ( char * filename,
   FILE *f;
   char line[256];
   clear_screen(s);
+  
+  color c;
+  c.red = 0;
+  c.green = 255;
+  c.blue = 255;
 
   if ( strcmp(filename, "stdin") == 0 ) 
     f = stdin;
@@ -69,6 +74,119 @@ void parse_file ( char * filename,
   while ( fgets(line, 255, f) != NULL ) {
     line[strlen(line)-1]='\0';
     printf(":%s:\n",line);
+
+    if(!(strcmp(line, "line"))){
+      fgets(line, 255, f);
+      double x0;
+      double x1;
+      double y0;
+      double y1;
+      double z0;
+      double z1;
+      sscanf(line,"%lf %lf %lf %lf %lf %lf", &x0, &y0, &z0, &x1, &y1, &z1);
+      add_edge(edges, x0, y0, z0, x1, y1, z1);
+    }
+
+    if(!(strcmp(line, "ident"))){
+      ident(transform);
+    }
+
+    if(!(strcmp(line, "scale"))){
+      fgets(line, 255, f);
+      double x;
+      double y;
+      double z;
+      sscanf(line, "%lf %lf %lf", &x, &y, &z);
+      
+      struct matrix * scale = make_scale(x, y, z);
+      matrix_mult(scale, transform);
+    }
+
+    if(!(strcmp(line, "move"))){
+      fgets(line, 255, f);
+      double x;
+      double y;
+      double z;
+      sscanf(line, "%lf %lf %lf", &x, &y, &z);
+
+      struct matrix * move = make_translate(x, y, z);
+      matrix_mult(move, transform);
+    }
+
+    if(!(strcmp(line, "rotate"))){
+      fgets(line, 255, f);
+      char axis;
+      double theta;
+      sscanf(line, "%c %lf", &axis, &theta);
+      struct matrix * rot;
+      if(axis == 'x'){
+        rot = make_rotX(theta);
+        matrix_mult(rot, transform);
+      }
+      if(axis == 'y'){
+        rot = make_rotY(theta);
+        matrix_mult(rot, transform);
+      }
+      if(axis == 'z'){
+        rot = make_rotZ(theta);
+        matrix_mult(rot, transform);
+      }
+    }
+
+    if(!(strcmp(line, "apply"))){
+      matrix_mult(transform, edges);
+    }
+
+    if(!(strcmp(line, "display"))){
+      clear_screen(s);
+      draw_lines(edges, s, c);
+      display(s);
+    }
+
+    if(!(strcmp(line, "save"))){
+      clear_screen(s);
+      draw_lines(edges, s, c);
+      fgets(line, 255, f);
+      char * file = malloc(255);
+      sscanf(line, "%s", file);
+      //save_ppm(s, file);
+      save_extension(s, file);
+    }
+  
+    if(!(strcmp(line, "quit"))){
+      exit(1);
+    }
+
+
   }
 }
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
